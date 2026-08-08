@@ -1,0 +1,14 @@
+services:
+  crypto:
+    build: .
+    container_name: busybar-crypto
+    restart: unless-stopped
+    environment:
+      # - TZ=America/Denver
+      - BUSYBAR=http://10.0.4.20/api   # your bar's address (10.0.4.20 = USB)
+      - COINS=bitcoin                  # CoinGecko coin IDs, comma-separated
+      - VS=usd                         # fiat: usd, eur, gbp, ...
+      - INTERVAL=120                   # price fetch period, seconds
+      - SHOW_EVERY=60                  # ticker showing period (0 = always on)
+      - ROTATE=10                      # seconds per coin on screen
+    network_mode: host
