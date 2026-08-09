@@ -34,7 +34,7 @@ All via environment variables in `compose.yaml`:
 
 | Variable     | Default                  | Meaning |
 |--------------|--------------------------|---------|
-| `BUSYBAR`    | `http://10.0.4.20/api`   | Bar API base. `10.0.4.20` is the fixed USB address; use your bar's IP for Wi-Fi. |
+| `BUSYBAR`    | `10.0.4.20`              | Bar's address (host or host:port). `10.0.4.20` is the fixed USB address; use your bar's IP for Wi-Fi. |
 | `COINS`      | `bitcoin`                | Comma-separated [CoinGecko coin IDs](https://api.coingecko.com/api/v3/coins/list). |
 | `VS`         | `usd`                    | Fiat currency: `usd`, `eur`, `gbp`, ... |
 | `INTERVAL`   | `120`                    | Seconds between price fetches. One request covers all coins; free tier is fine at 60+. |

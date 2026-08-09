@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       # - TZ=America/Denver
-      - BUSYBAR=http://10.0.4.20/api   # your bar's address (10.0.4.20 = USB)
+      - BUSYBAR=10.0.4.20               # your bar's address (10.0.4.20 = USB)
       - COINS=bitcoin                  # CoinGecko coin IDs, comma-separated
       - VS=usd                         # fiat: usd, eur, gbp, ...
       - INTERVAL=120                   # price fetch period, seconds

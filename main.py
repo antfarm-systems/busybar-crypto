@@ -11,21 +11,27 @@ on the front display. Configure via environment variables:
   SHOW_EVERY how often to show the ticker, in seconds (default: 60).
              Between showings the display is released so the bar's own
              clock/apps are visible. Set to 0 for always-on.
-  BUSYBAR    bar API base (default: http://172.31.3.134/api)
+  BUSYBAR    bar address, host or host:port (default 10.0.4.20 = USB;
+             set your bar's IP for Wi-Fi)
+
+Uses busylib (https://github.com/busy-app/busylib-py) for the device API.
 """
 import asyncio
 import os
 from datetime import datetime
 
 import httpx
+from busylib import AsyncBusyBar, exceptions, types
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 # Default is the BUSY Bar's fixed address when connected over USB.
-# For Wi-Fi, set BUSYBAR to your bar's IP, e.g. http://192.168.1.50/api
-BUSYBAR = os.environ.get("BUSYBAR", "http://10.0.4.20/api")
+# For Wi-Fi, set BUSYBAR to your bar's IP, e.g. 192.168.1.50
+BUSYBAR_ADDR = os.environ.get("BUSYBAR", "10.0.4.20")
 APP_NAME = "crypto"
 PRIORITY = 15
+
+bar = AsyncBusyBar(BUSYBAR_ADDR)
 
 COINS = [c.strip() for c in os.environ.get("COINS", "bitcoin").split(",") if c.strip()]
 VS = os.environ.get("VS", "usd").lower()
@@ -102,36 +108,25 @@ async def fetch_prices(client: httpx.AsyncClient):
 
 async def draw_ticker(coin_id: str):
     text, color = ticker_text(coin_id)
-    payload = {
-        "application_name": APP_NAME,
-        "priority": PRIORITY,
-        "elements": [{
-            "id": "ticker",
-            "type": "text",
-            "text": text,
-            "font": "bold",
-            "color": color,
-            "x": 36,
-            "y": 4,
-            "align": "center",
-            "timeout": ROTATE + 2,
-            "display": "front",
-        }],
-    }
-    async with httpx.AsyncClient() as client:
-        try:
-            await client.post(f"{BUSYBAR}/display/draw", json=payload, timeout=5)
-        except httpx.RequestError:
-            pass
+    display_data = types.DisplayElements(
+        application_name=APP_NAME,
+        priority=PRIORITY,
+        elements=[types.TextElement(
+            id="ticker", type="text", text=text, font="bold", color=color,
+            x=36, y=4, align="center", timeout=ROTATE + 2, display="front",
+        )],
+    )
+    try:
+        await bar.display_draw(display_data)
+    except exceptions.BusyBarError:
+        pass
 
 
 async def clear():
-    async with httpx.AsyncClient() as client:
-        try:
-            await client.request("DELETE", f"{BUSYBAR}/display/draw",
-                                 json={"application_name": APP_NAME}, timeout=5)
-        except httpx.RequestError:
-            pass
+    try:
+        await bar.display_clear(application_name=APP_NAME)
+    except exceptions.BusyBarError:
+        pass
 
 
 async def fetch_loop():
@@ -175,6 +170,7 @@ async def lifespan(app):
     for t in tasks:
         t.cancel()
     await clear()
+    await bar.aclose()
 
 
 app = FastAPI(lifespan=lifespan)
